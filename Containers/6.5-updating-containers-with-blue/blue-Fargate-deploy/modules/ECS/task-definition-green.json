@@ -1,0 +1,7 @@
+[
+    {
+        "name": "my-green-container",
+        "image": "129972428809.dkr.ecr.us-west-2.amazonaws.com/updating-containers-with-blue-green-deployments-container-repo:green",
+        "essential": true
+    }
+]

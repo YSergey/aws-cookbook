@@ -1,0 +1,3 @@
+variable "sysname" {
+    type = string
+} 

@@ -10,12 +10,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 session = boto3.session.Session()
 
-
 def lambda_handler(event, context):
 
     rds_host = os.environ["DB_HOST"]
-    username = "admin"
-    ssl = {'ca': '/opt/python/AmazonRootCA1.pem'}
+    username = os.environ["USER_NAME"]
+    #このファイルが存在しないというエラーが発生している
+    # SSL証明書
+    ssl = {'ca': 'AmazonRootCA1.pem'}
 
     rds_client = session.client(
         service_name='rds',
@@ -30,11 +31,12 @@ def lambda_handler(event, context):
         sys.exit(e)
 
     try:
-        pymysql.connect(rds_host, user=username, passwd=auth_token, connect_timeout=5, ssl=ssl)
+        pymysql.connect(host=rds_host, user=username, passwd=auth_token, connect_timeout=5, ssl=ssl)
         logger.info("SUCCESS: Connected to the MySQL RDS Database!")
     except pymysql.MySQLError as e:
         logger.error("ERROR: Could not connect to MySQL RDS Database!")
-        logger.error(e)
+        logger.error("Exception message: {}".format(str(e)))
         sys.exit(e)
+
 
     return("Successfully connected to RDS via RDS Proxy!")

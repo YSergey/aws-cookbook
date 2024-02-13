@@ -70,7 +70,5 @@ resource "aws_rds_cluster_instance" "rds_instance" {
   instance_class = var.instance_class
   db_subnet_group_name = aws_rds_cluster.aurora_cluster.db_subnet_group_name
 
-  //認証形式(ただしこれはもう古い)
-  # ca_cert_identifier = "rds-ca-2019"
 }
 

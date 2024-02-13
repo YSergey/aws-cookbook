@@ -6,6 +6,10 @@ variable "vpc_id" {
   type = string
 }
 
+variable "vpc_cidr" {
+  type = string
+}
+
 variable "subnet_a_id" {
   type = string
 }
@@ -16,6 +20,14 @@ variable "subnet_b_id" {
 
 variable "availability_zones" {
   type = list(string)
+}
+
+variable "ec2_sg_id" {
+  type = string
+}
+
+variable "lambda_sg_id" {
+  type = string
 }
 
 variable "cluster_identifier" {
@@ -39,9 +51,5 @@ variable "master_username" {
 }
 
 variable "instance_class" {
-  type = string
-}
-
-variable "iam_rds_proxy_role" {
   type = string
 }

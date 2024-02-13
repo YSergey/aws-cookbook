@@ -4,20 +4,8 @@ resource "aws_security_group" "sg_instance" {
   vpc_id = var.vpc_id
 }
 
-# エンドポイントに対する HTTPS 通信を許可
-resource "aws_security_group_rule" "endpoint_ingress_https" {
-  count = var.create_endpoint ? 1: 0
-  security_group_id = aws_security_group.endpoint[0].id
-  type              = "ingress"
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 0
-  to_port           = 443
-  protocol          = "tcp"
-}
-
 # インスタンスからの通信は許可
 resource "aws_security_group_rule" "instance_egress_all" {
-  count = var.create_endpoint ? 1: 0
   security_group_id = aws_security_group.sg_instance.id
   type              = "egress"
   cidr_blocks       = ["0.0.0.0/0"]
@@ -25,78 +13,6 @@ resource "aws_security_group_rule" "instance_egress_all" {
   to_port           = 0
   protocol          = "all"
 }
-
-# エンドポイント用のセキュリティグループ
-resource "aws_security_group" "endpoint" {
-  count = var.create_endpoint ? 1: 0
-  name   = "${var.sysname}-${var.instance_name}-endpoint"
-  vpc_id = var.vpc_id
-}
-
-# ssm エンドポイント
-resource "aws_vpc_endpoint" "ssm_endpoint" {
-  count = var.create_endpoint ? 1: 0
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${var.region}.ssm"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = [var.subnet_id]
-  security_group_ids = [
-    aws_security_group.endpoint[0].id
-  ]
-  private_dns_enabled = true
-}
-
-# ssmmessages エンドポイント
-resource "aws_vpc_endpoint" "ssmmessages_endpoint" {
-  count = var.create_endpoint ? 1: 0
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${var.region}.ssmmessages"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = [var.subnet_id]
-
-  security_group_ids = [
-    aws_security_group.endpoint[0].id
-  ]
-  private_dns_enabled = true
-}
-
-# ec2messages エンドポイント
-resource "aws_vpc_endpoint" "ec2messages_endpoint" {
-  count = var.create_endpoint ? 1: 0
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${var.region}.ec2messages"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = [var.subnet_id]
-
-  security_group_ids = [
-    aws_security_group.endpoint[0].id
-  ]
-  private_dns_enabled = true
-}
-
-data "aws_iam_policy_document" "vpc_endpoint" {
-  statement {
-    effect    = "Allow"
-    actions   = [ "*" ]
-    resources = [ "*" ]
-    principals {
-      type = "AWS"
-      identifiers = [ "*" ]
-    }
-  }
-}
-
-resource "aws_vpc_endpoint" "s3" {
-  count = var.create_endpoint ? 1: 0
-  vpc_endpoint_type = "Gateway"
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${var.region}.s3"
-  policy            = data.aws_iam_policy_document.vpc_endpoint.json
-  route_table_ids = [
-    var.route_table_id
-  ]
-}
-
 
 # Amazon Linux 2 AMI
 data aws_ssm_parameter "ami" {
@@ -108,18 +24,18 @@ resource "aws_instance" "instance" {
   instance_type = var.instance_type
   subnet_id     = var.subnet_id
   availability_zone = var.availability_zone
-  iam_instance_profile = var.instance_profile
+  iam_instance_profile = aws_iam_instance_profile.instance.name
   
   tags = {
     Name = "${var.sysname}"
   }
 }
 
-# Grant EC2 instance security group access to PostgreSQL port
-resource "aws_security_group_rule" "ec2_to_postgresql" {
+# Grant EC2 instance security group access to MySQL port
+resource "aws_security_group_rule" "ec2_to_mysql" {
   type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
+  from_port                = 3306
+  to_port                  = 3306
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.sg_instance.id
   security_group_id        = var.db_security_group_id

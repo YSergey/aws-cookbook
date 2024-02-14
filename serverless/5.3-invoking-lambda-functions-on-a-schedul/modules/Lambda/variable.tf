@@ -1,4 +1,5 @@
-variable "sysname" {
+
+variable "lambda_execution_role_arn" {
   type = string
 }
 
@@ -15,29 +16,5 @@ variable "handler" {
 }
 
 variable "runtime" {
-  type = string
-}
-
-variable "vpc_id" {
-    type = string
-}
-
-variable "vpc_cidr" {
-    type = string
-}
-
-variable "subnet_ids" {
-    type = list(string)
-}
-
-variable "DB_HOST" {
-    type = string
-}
-
-variable "USER_NAME" {
-    type = string
-}
-
-variable "db_proxy_sg_id" {
   type = string
 }

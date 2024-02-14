@@ -1,3 +1,4 @@
-output "lambda_sg" {
-    value = aws_security_group.lambda_sg.id
+output "lambda_arn" {
+  value = aws_lambda_function.example_lambda.arn
 }
+

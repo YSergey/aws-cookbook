@@ -1,4 +1,4 @@
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "self" { }
 
 #これでマッチするエンジンバージョンを探す
 #aws rds describe-db-engine-versions --engine aurora-mysql --query "DBEngineVersions[].EngineVersion"
@@ -6,14 +6,15 @@ data "aws_caller_identity" "current" {}
 locals {
     db = {
         sysname = "leveraging-rds-proxy-for-database-connections-from-lambda"
+        accound_id = "${data.aws_caller_identity.self.account_id}"
         availability_zones = ["us-west-2a", "us-west-2b"]
 
         cluster_identifier = "my-db-cluster"
-        # engine = "aurora-mysql"
-        engine = "mysql"
+        engine = "aurora-mysql"
+        # engine = "mysql"
         engine_mode = "provisioned"
-        # engine_version = "8.0.mysql_aurora.3.04.1"
-        engine_version = "8.0"
+        engine_version = "5.7.mysql_aurora.2.11.2"
+        # engine_version = "8.0"
         instance_class = "db.t3.medium"
         database_name = "mydb"
         master_username = "clusteradmin"

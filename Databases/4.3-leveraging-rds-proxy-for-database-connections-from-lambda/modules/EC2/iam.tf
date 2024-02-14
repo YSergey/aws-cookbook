@@ -31,7 +31,8 @@ resource "aws_iam_policy" "rds_proxy_access" {
         Effect   = "Allow",
         Action   = [
           "rds:DescribeDBProxyTargets",
-          "rds:DescribeDBProxies"
+          "rds:DescribeDBProxies",
+          "rds-db:connect"
         ]
         Resource = "*"
       }

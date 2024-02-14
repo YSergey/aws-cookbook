@@ -9,7 +9,11 @@ resource "aws_secretsmanager_secret_version" "db_secret_version" {
   # ユーザーネームとパスワードを含むJSONオブジェクトを指定
   secret_string = jsonencode({
     username = "${var.master_username}"
-    password = random_password.password.result
+    password = "${random_password.password.result}"
+    engine = "${var.engine}",
+    # host = "${aws_db_instance.rds_instance.address}",
+    port = 3306,
+    # dbInstanceIdentifier = "${aws_db_instance.rds_instance.id}"
   })
 }
 
@@ -35,19 +39,32 @@ resource "aws_security_group" "db_sg" {
   description = "Allow inbound traffic for Aurora MySQL"
   vpc_id      = var.vpc_id
 
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "${var.sysname}-aurora-db-sg"
   }
 }
 
-#RDS Proxyのセキュリティグループ
 resource "aws_security_group" "db_proxy_sg" {
   name        = "${var.sysname}-db-proxy-sg"
-  description = "Allow inbound traffic for Aurora MySQL via DB Proxy"
-  vpc_id = var.vpc_id
+  description = "Allow inbound traffic for RDS Proxy"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
 
   tags = {
-    Name = "${var.sysname}-db-proxy-sg"
+    Name = "${var.sysname}-aurora-db-proxy-sg"
   }
 }
 
@@ -72,7 +89,7 @@ resource "aws_security_group_rule" "ec2_to_rds_proxy" {
 }
 
 # RDS Proxy -> RDS
-resource "aws_security_group_rule" "rds_proxy_to_db" {
+resource "aws_security_group_rule" "rds_proxy_to_rds" {
   type              = "ingress"
   from_port         = 3306
   to_port           = 3306
@@ -82,55 +99,55 @@ resource "aws_security_group_rule" "rds_proxy_to_db" {
 }
 
 
-# # Create Aurora Serverless cluster
-# resource "aws_rds_cluster" "aurora_cluster" {
-#   cluster_identifier      = var.cluster_identifier
-#   engine                  = var.engine
-#   engine_version          = var.engine_version
-#   database_name           = var.database_name
-#   master_username         = var.master_username
-#   master_password         = random_password.password.result
-#   db_subnet_group_name    = aws_db_subnet_group.aurora_db_subnet_group.name
-#   availability_zones =  var.availability_zones
-#   skip_final_snapshot     = true
-
-#   iam_database_authentication_enabled = true
-
-#   vpc_security_group_ids  = [ aws_security_group.db_sg.id ]
-
-# }
-
-# resource "aws_rds_cluster_instance" "rds_instance" {
-#   identifier         = "database-cluster-instance"
-#   cluster_identifier = aws_rds_cluster.aurora_cluster.id
-
-#   engine = aws_rds_cluster.aurora_cluster.engine
-#   engine_version = aws_rds_cluster.aurora_cluster.engine_version
-
-#   instance_class = var.instance_class
-#   db_subnet_group_name = aws_rds_cluster.aurora_cluster.db_subnet_group_name
-
-# }
-
-resource "aws_db_instance" "rds_instance" {
-  allocated_storage    = 10
-  storage_type         = "gp2"
-  engine               = var.engine
-  engine_version       = var.engine_version
-  instance_class       = var.instance_class
-  username             = var.master_username
-  password             = random_password.password.result
-  db_subnet_group_name = aws_db_subnet_group.aurora_db_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-
-  port                 = 3306
-  apply_immediately    = true
-
-  skip_final_snapshot = true
+# Create Aurora Serverless cluster
+resource "aws_rds_cluster" "aurora_cluster" {
+  cluster_identifier      = var.cluster_identifier
+  engine                  = var.engine
+  engine_version          = var.engine_version
+  database_name           = var.database_name
+  master_username         = var.master_username
+  master_password         = random_password.password.result
+  db_subnet_group_name    = aws_db_subnet_group.aurora_db_subnet_group.name
+  availability_zones =  var.availability_zones
+  skip_final_snapshot     = true
 
   iam_database_authentication_enabled = true
 
+  vpc_security_group_ids  = [ aws_security_group.db_sg.id ]
+
 }
+
+resource "aws_rds_cluster_instance" "rds_instance" {
+  identifier         = "database-cluster-instance"
+  cluster_identifier = aws_rds_cluster.aurora_cluster.id
+
+  engine = aws_rds_cluster.aurora_cluster.engine
+  engine_version = aws_rds_cluster.aurora_cluster.engine_version
+
+  instance_class = var.instance_class
+  db_subnet_group_name = aws_rds_cluster.aurora_cluster.db_subnet_group_name
+
+}
+
+# resource "aws_db_instance" "rds_instance" {
+#   allocated_storage    = 8
+#   storage_type         = "gp2"
+#   engine               = var.engine
+#   engine_version       = var.engine_version
+#   instance_class       = var.instance_class
+#   username             = var.master_username
+#   password             = random_password.password.result
+#   db_subnet_group_name = aws_db_subnet_group.aurora_db_subnet_group.name
+#   vpc_security_group_ids = [aws_security_group.db_sg.id]
+
+#   port                 = 3306
+#   apply_immediately    = true
+
+#   skip_final_snapshot = true
+
+#   iam_database_authentication_enabled = false
+
+# }
 
 # RDS Proxy 
 resource "aws_db_proxy" "rds_proxy" {
@@ -153,7 +170,7 @@ resource "aws_db_proxy" "rds_proxy" {
   depends_on = [ 
     aws_iam_role.rds_proxy_role,
     aws_secretsmanager_secret.db_secret,
-    aws_db_instance.rds_instance
+    # aws_db_instance.rds_instance
   ]
 }
 
@@ -182,8 +199,12 @@ resource "aws_db_proxy_default_target_group" "rds_proxy_tg" {
 resource "aws_db_proxy_target" "rds_proxy_target" {
   db_proxy_name = aws_db_proxy.rds_proxy.name
   target_group_name = aws_db_proxy_default_target_group.rds_proxy_tg.name
-  # db_cluster_identifier = aws_rds_cluster.aurora_cluster.id #クラスターに直接接続する場合
-  db_instance_identifier = aws_db_instance.rds_instance.identifier
+  db_cluster_identifier = aws_rds_cluster.aurora_cluster.id #クラスターに直接接続する場合
+  # db_instance_identifier = aws_db_instance.rds_instance.identifier
 
-  depends_on = [ aws_db_proxy.rds_proxy ]
+  depends_on = [ 
+    aws_rds_cluster.aurora_cluster,
+    aws_rds_cluster_instance.rds_instance,
+    aws_db_proxy.rds_proxy
+    ]
 }

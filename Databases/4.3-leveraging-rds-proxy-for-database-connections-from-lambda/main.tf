@@ -18,6 +18,8 @@ module "VPC" {
 module "DB" {
   source = "./modules/DB"
   sysname = local.db.sysname
+  region = var.region
+  account_id = local.db.accound_id
 
   vpc_id = module.VPC.vpc_id
   vpc_cidr = module.VPC.vpc_cidr

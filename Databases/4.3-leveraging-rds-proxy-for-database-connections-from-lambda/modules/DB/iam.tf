@@ -36,6 +36,16 @@ resource "aws_iam_policy" "rds_proxy_secrets_policy" {
           "secretsmanager:ListSecretVersionIds" 
         ],
         Resource = "${aws_secretsmanager_secret.db_secret.arn}"
+      },
+      {
+        Effect =  "Allow",
+        Action =  "kms:Decrypt",
+        Resource =  "arn:aws:kms:${var.region}:${var.account_id}:key/aws/secretsmanager",
+        Condition =  {
+          "StringEquals": {
+            "kms:ViaService": "secretsmanager.${var.region}.amazonaws.com"
+              }
+          }
       }
     ]
   })

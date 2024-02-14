@@ -1,3 +1,0 @@
-variable "sysname" {
-    type = string
-}

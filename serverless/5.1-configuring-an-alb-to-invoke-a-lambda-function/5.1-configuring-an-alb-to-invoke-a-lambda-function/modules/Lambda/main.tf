@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "example_lambda" {
   filename      = var.file_name
   function_name = var.function_name
-  role          = var.lambda_execution_role_arn
+  role          = aws_iam_role.lambda_execution_role.arn
   handler       = var.handler
   runtime       = var.runtime
 
@@ -11,7 +11,7 @@ resource "aws_lambda_function" "example_lambda" {
   }
 
   depends_on = [
-    var.lambda_execution_role_arn
+    aws_iam_role.lambda_execution_role.arn
   ]
 }
 

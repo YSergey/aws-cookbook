@@ -13,10 +13,6 @@ variable "security_group_ids" {
   type        = list(string)
 }
 
-variable "lambda_execution_role_arn" {
-  type = string
-}
-
 variable "file_name" {
   type = string
 }

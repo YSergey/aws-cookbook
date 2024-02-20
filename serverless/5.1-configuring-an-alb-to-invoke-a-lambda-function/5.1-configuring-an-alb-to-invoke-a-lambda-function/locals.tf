@@ -14,12 +14,6 @@ locals {
 }
 
 locals {
-  IAM = {
-    sysname = "configuring-an-alb-to-invoke-a-lambda-function"
-  }
-}
-
-locals {
   Lambda = {
     sysname = "configuring-an-alb-to-invoke-a-lambda-function"
     file_name = "modules/lambda/lambda_function_payload.zip"

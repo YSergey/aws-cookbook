@@ -12,18 +12,12 @@ module "VPC" {
   az_b = local.VPC.subnet_b_az
 }
 
-module "IAM" {
-  source = "./modules/IAM"
-  sysname = local.IAM.sysname
-}
-
 module "Lambda" {
   source = "./modules/Lambda"
 
   vpc_id = module.VPC.vpc_id
   subnet_ids = [ module.VPC.subnet_a_id, module.VPC.subnet_b_id ]
 
-  lambda_execution_role_arn = module.IAM.lambda_role_arn
   function_name = local.Lambda.function_name
   file_name = local.Lambda.file_name
   handler = local.Lambda.handler

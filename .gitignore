@@ -16,3 +16,6 @@ crash.*.log
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Finder (MacOS) folder config
+.DS_Store

@@ -7,7 +7,7 @@ resource "aws_kinesis_stream" "firehose_stream" {
 # Kinesis Data Firehose配信ストリームの作成
 resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
   name        = "firehose-delivery-stream"
-  destination = "s3"
+  destination = "extended_s3"
 
   kinesis_source_configuration {
     kinesis_stream_arn = aws_kinesis_stream.firehose_stream.arn
@@ -17,5 +17,18 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
   extended_s3_configuration {
     role_arn   = aws_iam_role.firehose_role.arn
     bucket_arn = var.bucket_arn
+
+    processing_configuration {
+      enabled = true
+
+      processors {
+        type = "Lambda"
+
+        parameters {
+          parameter_name  = "LambdaArn"
+          parameter_value = "${var.lambda_function_arn}"
+        }
+      }
+    }
   }
 }

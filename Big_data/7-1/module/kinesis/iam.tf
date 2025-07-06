@@ -14,7 +14,7 @@ resource "aws_iam_policy" "kinesis_access" {
           "kinesis:GetRecords",
           "kinesis:ListShards"
         ]
-        Resource = aws_kinesis_stream.example.arn
+        Resource = "${aws_kinesis_stream.example.arn}"
       }
     ]
   })

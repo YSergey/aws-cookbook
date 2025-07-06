@@ -62,3 +62,7 @@ aws kinesis get-records \
 --query Records[0].Data \
 --output text | base64 --decode
 ```
+
+## Challenge
+
+Automatically trigger a Lambda function to process incoming Kinesis data.

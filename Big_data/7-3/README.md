@@ -52,3 +52,4 @@ aws glue get-table --datyabase-name awscookbook703 --name data
 
 ## Challenge
 
+Configure your crawler to run on an interval so that your tables and metadata are automatically updated.

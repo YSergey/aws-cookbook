@@ -41,6 +41,53 @@ data "aws_iam_policy_document" "s3_write_results" {
   }
 }
 
+resource "aws_iam_policy" "athena_execution_policy" {
+  name = "athena-execution-policy"
+
+  policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        # Snowflakeのログが保存されているS3バケットへの読み取り権限
+        Effect   = "Allow",
+        Action   = ["s3:GetObject", "s3:ListBucket"],
+        Resource = [
+          aws_s3_bucket.log_archive.arn,
+          "${aws_s3_bucket.log_archive.arn}/*"
+        ]
+      },
+      {
+        # Athenaのクエリ結果バケットへの書き込み権限
+        Effect   = "Allow",
+        Action   = ["s3:GetObject", "s3:ListBucket", "s3:PutObject"],
+        Resource = [
+          aws_s3_bucket.athena_results.arn,
+          "${aws_s3_bucket.athena_results.arn}/*"
+        ]
+      },
+      {
+        # Glueデータカタログへのアクセス権限
+        Effect = "Allow",
+        Action = [
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetPartition",
+          "glue:GetPartitions",
+          "glue:BatchGetPartition"
+        ],
+        Resource = ["*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "athena_execution_policy_attachment" {
+  role       = aws_iam_role.athena_execution_role.name
+  policy_arn = aws_iam_policy.athena_execution_policy.arn
+}
+
 resource "aws_iam_policy" "s3_write_results_policy" {
   name   = "athena-s3-write-results"
   policy = data.aws_iam_policy_document.s3_write_results.json
